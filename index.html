@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MPI Fisika - Relativitas Kontraksi Panjang</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body{font-family:'Trebuchet MS','Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#fde2e4,#e2ecf9 45%,#d8f3e3);min-height:100vh;color:#3b3b58}
+.screen{display:none;min-height:100vh;padding:4.5rem 1rem 3.5rem}
+.screen.on{display:flex;flex-direction:column;align-items:center;animation:in .5s}
+@keyframes in{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.4) rotate(-6deg)}70%{transform:scale(1.08)}100%{opacity:1;transform:none}}
+@keyframes sq{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.55)}}
+.title{animation:pop .9s both}.title2{animation:pop .9s .25s both}
+.rocket{display:inline-block;animation:sq 2.4s infinite;font-size:4rem}
+.card{background:rgba(255,255,255,.88);border-radius:1.5rem;padding:1.25rem;box-shadow:0 6px 20px rgba(120,120,160,.15);width:100%;max-width:46rem}
+.btn{border-radius:1rem;padding:.7rem 1.4rem;font-weight:700;background:#cfe0ff;color:#3b3b58;box-shadow:0 3px 0 #a9bfe8;transition:transform .15s,filter .15s;cursor:pointer}
+.btn:hover{transform:translateY(-3px);filter:brightness(1.06)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;pointer-events:none}
+.p1{background:#ffd6e0;box-shadow:0 3px 0 #e8aebd}.p2{background:#d3f2e0;box-shadow:0 3px 0 #a9d4bc}.p3{background:#fff3c4;box-shadow:0 3px 0 #e3d08a}.p4{background:#e6d9fa;box-shadow:0 3px 0 #c3b0e6}
+.opt{display:block;width:100%;text-align:left;margin-bottom:.5rem;background:#f3f6ff}
+.opt.sel{outline:3px solid #8aa9e6}
+.chip{cursor:grab}
+.blank{display:inline-block;min-width:7rem;border-bottom:3px dashed #8aa9e6;text-align:center;font-weight:700;color:#4a6fc0}
+.tok{padding:.15rem .3rem;border-radius:.5rem;cursor:pointer}.tok.m{background:#ffe08a}
+.tab.on{outline:3px solid #8aa9e6}
+details{background:#f6f2ff;border-radius:1rem;padding:.6rem .9rem;margin-top:.7rem}
+summary{cursor:pointer;font-weight:700}
+input[type=text]{border:2px solid #cfe0ff;border-radius:.9rem;padding:.6rem .9rem;font-size:1.1rem;outline:none;background:#fff}
+input[type=text]:focus{border-color:#8aa9e6}
+#home{position:fixed;top:.75rem;left:.75rem;z-index:50;display:none}
+#foot{position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:.78rem;padding:.35rem;background:rgba(255,255,255,.75);z-index:40}
+@page{size:A4 landscape;margin:12mm}
+@media print{#home,#foot,.noprint{display:none!important}.screen:not(#simulasi){display:none!important}body{background:#fff}#simulasi{padding:0;display:block}#simulasi>*:not(#simEnd){display:none!important}.card{box-shadow:none;max-width:none!important}#rekap{break-before:page}}
+</style>
+</head>
+<body>
+<button id="home" class="btn p1" onclick="go('menu')">&#127968; HOME</button>
+<div id="foot">Pengembang: Heni Suhartini, S.T.P., M.Pd. | Tahun 2026</div>
+
+<!-- SPLASH -->
+<section id="splash" class="screen on justify-center text-center">
+  <div class="rocket">&#128640;</div>
+  <h1 class="title text-5xl sm:text-7xl font-extrabold mt-4" style="color:#e07a9b">KONTRAKSI PANJANG</h1>
+  <h2 class="title2 text-2xl sm:text-3xl font-bold mt-2" style="color:#5b86d6">Relativitas Khusus Einstein</h2>
+  <p class="mt-3 text-lg">Fisika SMA Kelas XII</p>
+  <button class="btn p2 text-2xl mt-8 px-10 py-4" onclick="start()">MULAI</button>
+</section>
+
+<!-- MENU -->
+<section id="menu" class="screen gap-5">
+  <h2 class="text-3xl font-extrabold" style="color:#e07a9b">Menu Utama</h2>
+  <div class="grid grid-cols-2 gap-4 w-full max-w-xl">
+    <button class="btn p1 text-xl py-6" onclick="go('beranda')">&#127968;<br>BERANDA</button>
+    <button class="btn p2 text-xl py-6" onclick="go('materi');mat(0)">&#128214;<br>MATERI</button>
+    <button class="btn p3 text-xl py-6" onclick="go('simulasi');simReset()">&#128300;<br>SIMULASI</button>
+    <button class="btn p4 text-xl py-6" onclick="go('kuis');kzPick()">&#127918;<br>KUIS</button>
+  </div>
+  <div class="card max-w-xl">
+    <h3 class="font-bold mb-2">&#9881; Pengaturan</h3>
+    <div class="flex items-center gap-3 flex-wrap">
+      <button id="mus" class="btn p3">&#127925; Musik: ON</button>
+      <label class="flex items-center gap-2">Volume <input id="vol" type="range" min="0" max="100" value="60"></label>
+    </div>
+  </div>
+</section>
+
+<!-- BERANDA -->
+<section id="beranda" class="screen gap-4">
+  <div class="card">
+    <h2 class="text-2xl font-extrabold mb-2" style="color:#e07a9b">Selamat datang!</h2>
+    <p>Apakah panjang sebuah benda selalu sama bagi semua pengamat? Menurut Einstein, tidak. Benda yang melaju sangat cepat terukur lebih pendek searah geraknya. Yuk, pelajari caranya.</p>
+    <h3 class="font-bold mt-4">Tujuan Pembelajaran</h3>
+    <ol class="list-decimal ml-6">
+      <li>Siswa dapat memahami konsep Relativitas Kontraksi Panjang.</li>
+      <li>Siswa dapat menerapkan konsep Relativitas Kontraksi Panjang dalam kehidupan sehari-hari.</li>
+    </ol>
+    <h3 class="font-bold mt-4">Cara Belajar</h3>
+    <p>Baca <b>Materi</b>, coba <b>Kuis</b> untuk latihan bertahap, lalu kerjakan <b>Simulasi</b> 10 soal untuk mendapat sertifikat.</p>
+  </div>
+</section>
+
+<!-- MATERI -->
+<section id="materi" class="screen gap-4">
+  <div class="flex gap-2 flex-wrap justify-center" id="tabs"></div>
+  <div class="card" id="mbox"></div>
+  <div class="flex gap-3"><button class="btn" onclick="mat(mi-1)">&#9664; Sebelumnya</button><button class="btn p2" onclick="mat(mi+1)">Berikutnya &#9654;</button></div>
+</section>
+
+<!-- SIMULASI -->
+<section id="simulasi" class="screen gap-4">
+  <div class="card" id="simIntro">
+    <h2 class="text-2xl font-extrabold mb-2" style="color:#e07a9b">Simulasi Uji Pemahaman</h2>
+    <p class="mb-3">10 soal hitungan kontraksi panjang: pilihan ganda, seret kata, dan tandai kata. Nilaimu otomatis dikirim ke lembar data guru.</p>
+    <label class="block font-bold mb-1" for="nama">Nama siswa</label>
+    <input id="nama" type="text" maxlength="40" autocomplete="off" placeholder="Ketik namamu di sini" class="w-full">
+    <label class="block font-bold mb-1 mt-3" for="kelas">Kelas</label>
+    <input id="kelas" type="text" maxlength="20" autocomplete="off" placeholder="Contoh: XII IPA 1" class="w-full">
+    <p id="simErr" class="text-red-500 text-sm mt-1"></p>
+    <button class="btn p2 mt-3" onclick="simStart()">Mulai Mengerjakan</button>
+  </div>
+  <div class="card hidden" id="simQ"><div class="text-sm mb-2" id="simNo"></div><div id="simBox"></div></div>
+  <div class="hidden w-full max-w-3xl" id="simEnd"></div>
+</section>
+
+<!-- KUIS -->
+<section id="kuis" class="screen gap-4">
+  <div class="card" id="kzBox"></div>
+</section>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const shuf=a=>a.slice().sort(()=>Math.random()-.5);
+const SHEET_URL=""; // Tempel URL Web App (Google Apps Script) lembar data di sini
+
+/* ===== AUDIO ===== */
+let AC,master,music=true,vol=.6,timer,step=0;
+function ac(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=vol;master.connect(AC.destination)}if(AC.state==='suspended')AC.resume()}
+function tone(f,t=.12,ty='sine',g=.25,at=0){if(!AC)return;const o=AC.createOscillator(),n=AC.createGain(),s=AC.currentTime+at;o.type=ty;o.frequency.value=f;n.gain.setValueAtTime(g,s);n.gain.exponentialRampToValueAtTime(.001,s+t);o.connect(n);n.connect(master);o.start(s);o.stop(s+t)}
+const sfx={click:()=>tone(660,.08,'square',.1),ok:()=>{tone(523,.12,'triangle',.3);tone(784,.22,'triangle',.3,.1)},no:()=>tone(180,.3,'sawtooth',.15)};
+const mel=[523,659,784,659,587,698,880,698,523,659,784,1047,880,784,659,587];
+function bgm(){clearInterval(timer);if(!music||!AC)return;timer=setInterval(()=>{const f=mel[step%16];tone(f,.28,'triangle',.07);if(step%4==0)tone(f/2,.5,'sine',.08);step++},260)}
+document.addEventListener('click',e=>{if(e.target.closest('button')){ac();sfx.click()}});
+$('#mus').onclick=()=>{music=!music;$('#mus').innerHTML=music?'&#127925; Musik: ON':'&#128263; Musik: OFF';music?bgm():clearInterval(timer)};
+$('#vol').oninput=e=>{vol=e.target.value/100;if(master)master.gain.value=vol};
+
+/* ===== NAVIGASI ===== */
+function go(id){$$('.screen').forEach(s=>s.classList.toggle('on',s.id===id));$('#home').style.display=id==='splash'?'none':'block';scrollTo(0,0)}
+function start(){ac();bgm();go('menu')}
+
+/* ===== MATERI ===== */
+const T=['Konsep','Rumus','Contoh Soal','Sehari-hari'];
+const P=[
+`<h2 class="text-xl font-extrabold mb-2">Apa itu kontraksi panjang?</h2>
+<p>Dalam relativitas khusus, benda yang bergerak dengan kecepatan mendekati kecepatan cahaya (c = 3 x 10<sup>8</sup> m/s) terukur <b>lebih pendek</b> oleh pengamat yang diam, tetapi hanya pada arah yang <b>sejajar</b> geraknya. Lebar dan tinggi benda tidak berubah.</p>
+<p class="mt-2">Panjang yang diukur oleh pengamat yang diam terhadap benda disebut <b>panjang proper</b> (L<sub>0</sub>). Panjang proper adalah yang paling besar.</p>
+<details><summary>Mengapa mobil dan pesawat tidak terlihat memendek?</summary><p class="mt-2">Kecepatan sehari-hari jauh lebih kecil daripada c. Pada mobil 100 km/jam, penyusutannya sekitar 10<sup>-15</sup> bagian dari panjangnya, jauh di bawah ketelitian alat ukur apa pun.</p></details>
+<details><summary>Apakah benda benar-benar menyusut?</summary><p class="mt-2">Yang berubah adalah hasil pengukuran. Tiap pengamat yang bergerak relatif terhadap benda mengukur panjang berbeda, dan semuanya benar dalam kerangka acuannya masing-masing.</p></details>`,
+`<h2 class="text-xl font-extrabold mb-2">Rumus kontraksi panjang</h2>
+<p class="text-center text-2xl my-3 font-bold">L = L<sub>0</sub> &radic;(1 &minus; v<sup>2</sup>/c<sup>2</sup>) = L<sub>0</sub>/&gamma;</p>
+<p>dengan &gamma; = 1/&radic;(1 &minus; v<sup>2</sup>/c<sup>2</sup>). L adalah panjang terukur, L<sub>0</sub> panjang proper, v kecepatan benda terhadap pengamat.</p>
+<div class="mt-3 p-3 rounded-2xl" style="background:#eef4ff">
+<b>Coba sendiri:</b> pesawat dengan L<sub>0</sub> = 100 m. Geser kecepatannya.
+<input type="range" min="0" max="0.99" step="0.01" value="0" class="w-full mt-2" oninput="dm(this.value)">
+<p>v = <b id="dv">0.00</b> c &nbsp; &gamma; = <b id="dg">1.00</b> &nbsp; L = <b id="dL">100.0</b> m</p>
+<div class="h-5 rounded-full mt-1" style="background:#dbe4f5"><div id="db" class="h-5 rounded-full" style="width:100%;background:#9fc0f5;transition:width .15s"></div></div></div>
+<details><summary>Apa arti v mendekati c?</summary><p class="mt-2">Nilai &radic;(1 &minus; v<sup>2</sup>/c<sup>2</sup>) mendekati nol, sehingga L terukur mendekati nol. Benda bermassa tidak pernah bisa mencapai c.</p></details>`,
+`<h2 class="text-xl font-extrabold mb-2">Contoh soal</h2>
+<p><b>Soal 1.</b> Sebuah roket memiliki panjang diam 100 m dan bergerak 0,6c terhadap Bumi. Berapa panjangnya menurut pengamat di Bumi?</p>
+<details><summary>Lihat pembahasan</summary><p class="mt-2">L = 100 &radic;(1 &minus; 0,6<sup>2</sup>) = 100 &radic;0,64 = 100 x 0,8 = <b>80 m</b>.</p></details>
+<p class="mt-4"><b>Soal 2.</b> Batang yang panjang diamnya 5 m terukur 3 m. Berapa kecepatannya?</p>
+<details><summary>Lihat pembahasan</summary><p class="mt-2">3/5 = &radic;(1 &minus; v<sup>2</sup>/c<sup>2</sup>) lalu 0,36 = 1 &minus; v<sup>2</sup>/c<sup>2</sup>, sehingga v<sup>2</sup>/c<sup>2</sup> = 0,64 dan v = <b>0,8c</b>.</p></details>`,
+`<h2 class="text-xl font-extrabold mb-2">Kontraksi panjang dalam kehidupan</h2>
+<details open><summary>Muon sinar kosmik</summary><p class="mt-2">Muon tercipta di atmosfer atas dan hidup sangat singkat, tetapi tetap banyak yang sampai ke permukaan Bumi. Dari kerangka muon, ketebalan atmosfer yang ia tempuh terkontraksi sehingga perjalanannya cukup singkat.</p></details>
+<details><summary>Akselerator partikel</summary><p class="mt-2">Di fasilitas seperti LHC, partikel melaju mendekati c. Perancang harus memakai perhitungan relativistik, termasuk kontraksi panjang, agar sinkronisasi dan medan magnet tepat.</p></details>
+<details><summary>Perjalanan antariksa (konsep)</summary><p class="mt-2">Pada kecepatan mendekati c, jarak antarbintang terukur lebih pendek bagi awak pesawat. Ini masih berupa perhitungan teori, belum teknologi nyata.</p></details>
+<details><summary>Renungkan</summary><p class="mt-2">Mengapa kita perlu relativitas untuk partikel, tetapi tidak untuk kereta cepat? Jawabannya ada pada perbandingan v dan c.</p></details>`];
+let mi=0;
+function mat(n){mi=Math.max(0,Math.min(P.length-1,n));$('#tabs').innerHTML=T.map((t,i)=>`<button class="btn tab ${i==mi?'on p3':''}" onclick="mat(${i})">${t}</button>`).join('');$('#mbox').innerHTML=P[mi]}
+function dm(v){v=+v;const g=1/Math.sqrt(1-v*v),L=100/g;$('#dv').textContent=v.toFixed(2);$('#dg').textContent=g.toFixed(2);$('#dL').textContent=L.toFixed(1);$('#db').style.width=L+'%'}
+
+/* ===== BANK SOAL ===== */
+const M=(q,...o)=>({type:'mc',q,o});
+const TF=(q,v)=>({type:'mc',q:'Benar atau salah? '+q,o:['BENAR','SALAH'],fix:1,c:v?'BENAR':'SALAH'});
+const D=(q,...o)=>({type:'drag',q,o});
+const C=(q,a,u)=>({type:'calc',q,a,u});
+const K=(q,s,...a)=>({type:'mark',q,s,a});
+const G=[
+{n:'Pilih Jawaban',e:'&#127919;',c:'p1',L:[
+ [M('Kontraksi panjang terjadi pada benda yang...','bergerak mendekati kecepatan cahaya','diam','berada di dalam air','dipanaskan'),M('Kontraksi panjang terjadi pada arah...','sejajar arah gerak','tegak lurus arah gerak','semua arah','tidak ada arah')],
+ [M('Panjang benda yang diukur pengamat diam terhadap benda disebut...','panjang proper','panjang semu','panjang fokus','panjang nol'),M('Nilai faktor gamma selalu...','lebih dari atau sama dengan 1','kurang dari 1','sama dengan 0','negatif')],
+ [M('Pesawat 0,8c, panjang diam 100 m. Panjang terukur di Bumi...','60 m','80 m','100 m','125 m'),M('Jika v mendekati c, panjang terukur mendekati...','nol','L0','tak hingga','2 L0')]]},
+{n:'Benar atau Salah',e:'&#9989;',c:'p2',L:[
+ [TF('Benda yang sangat cepat terukur memendek searah geraknya.',1),TF('Kecepatan cahaya bergantung pada pengamat.',0)],
+ [TF('Tinggi benda ikut menyusut saat benda bergerak horizontal.',0),TF('Pengamat yang ikut bergerak bersama benda mengukur panjang proper.',1)],
+ [TF('Panjang terukur dapat lebih besar daripada panjang diam.',0),TF('Pada 0,6c panjang terukur menjadi 80% panjang diam.',1)]]},
+{n:'Hitung Cepat',e:'&#129518;',c:'p3',L:[
+ [C('v = 0,6c dan L0 = 10 m. Berapa L?',8,'m'),C('v = 0,8c dan L0 = 50 m. Berapa L?',30,'m')],
+ [C('v = 0,6c dan L0 = 200 m. Berapa L?',160,'m'),C('v = 0,8c dan L0 = 150 m. Berapa L?',90,'m')],
+ [C('v = 0,96c dan L0 = 100 m. Berapa L?',28,'m'),C('Batang 5 m terukur 3 m. Berapa v/c?',0.8,'c')]]},
+{n:'Seret Kata',e:'&#129513;',c:'p4',L:[
+ [D('Benda yang mendekati kecepatan ___ mengalami kontraksi panjang.','cahaya','suara','angin'),D('Panjang benda saat diam disebut panjang ___.','proper','semu','nol')],
+ [D('Dalam rumus L = L0 akar(1 - v^2/___), penyebutnya adalah c kuadrat.','c^2','c','v^2'),D('Kontraksi panjang adalah akibat teori relativitas ___ Einstein.','khusus','umum','klasik')],
+ [D('Semakin besar v, faktor gamma semakin ___.','besar','kecil','tetap'),D('Untuk v = 0, panjang terukur sama dengan panjang ___.','diam','nol','tak hingga')]]}
+];
+const S=[
+ M('Pesawat panjang diam 100 m bergerak 0,6c. Berapa panjangnya menurut pengamat di Bumi?','80 m','60 m','100 m','125 m'),
+ M('Roket panjang diam 50 m melaju 0,8c. Panjang terukur pengamat diam adalah...','30 m','40 m','50 m','83 m'),
+ D('Batang panjang diam 15 m bergerak 0,8c. Panjang terukur L = ___.','9 m','12 m','25 m','19 m'),
+ M('Pesawat antariksa panjang diam 100 m melaju 0,96c. Panjang terukurnya...','28 m','4 m','96 m','36 m'),
+ M('Pesawat bergerak 0,6c terukur 40 m. Berapa panjang diamnya?','50 m','32 m','24 m','66,7 m'),
+ M('Benda panjang diam 50 m terukur 30 m. Berapa kecepatan benda?','0,8c','0,6c','0,5c','0,3c'),
+ D('Panjang diam 10 m terukur 8 m. Kecepatan benda v = ___.','0,6c','0,8c','0,4c'),
+ D('Panjang diam 25 m terukur 7 m. Kecepatan benda v = ___.','0,96c','0,28c','0,72c'),
+ K('Klik hasil yang salah pada langkah berikut (v = 0,8c, L0 = 200 m).','L = 200 x akar(1 - 0,8^2) = 200 x 0,6 = 140 m','140'),
+ K('Klik hasil yang salah pada langkah berikut (L0 = 100 m, L = 80 m).','(L/L0)^2 = 0,64 sehingga v^2/c^2 = 0,36 dan v = 0,8c.','0,8c')
+];
+
+/* ===== PENYAJI SOAL (dipakai kuis dan simulasi) ===== */
+function show(box,q,cb,lbl){
+ let sel=null;const o=q.o?(q.fix?q.o:shuf(q.o)):[];
+ let h='<p class="font-bold text-lg mb-3">';
+ if(q.type==='drag')h+=q.q.replace('___','<span id="bl" class="blank">&nbsp;</span>')+'</p>';
+ else if(q.type==='mark')h+=q.q+'</p><p class="text-lg leading-10 mb-3">'+q.s.split(' ').map(w=>`<span class="tok">${w}</span>`).join(' ')+'</p>';
+ else h+=q.q+'</p>';
+ if(q.type==='calc')h+=`<input id="ci" type="text" inputmode="decimal" autocomplete="off" placeholder="Jawaban" class="w-40"> <span class="font-bold">${q.u}</span>`;
+ else if(q.type==='drag')h+='<p class="text-sm mb-1">Seret kata ke kotak, atau klik kata.</p><div class="flex flex-wrap gap-2 my-2">'+o.map((x,i)=>`<button class="btn p3 chip" draggable="true" data-i="${i}">${x}</button>`).join('')+'</div>';
+ else if(q.type==='mc')h+=o.map((x,i)=>`<button class="btn opt" data-i="${i}">${x}</button>`).join('');
+ h+='<div class="mt-4 flex items-center gap-3 flex-wrap"><button id="chk" class="btn p2">'+(lbl||'Periksa')+'</button><span id="fb" class="font-semibold"></span></div>';
+ box.innerHTML=h;
+ const bl=box.querySelector('#bl'),chk=box.querySelector('#chk');
+ const pick=i=>{sel=i;if(bl)bl.textContent=o[i];box.querySelectorAll('.opt').forEach((b,j)=>b.classList.toggle('sel',j===i))};
+ box.querySelectorAll('.opt,.chip').forEach(b=>{b.onclick=()=>pick(+b.dataset.i);b.ondragstart=e=>e.dataTransfer.setData('text/plain',b.dataset.i)});
+ if(bl){bl.ondragover=e=>e.preventDefault();bl.ondrop=e=>{e.preventDefault();pick(+e.dataTransfer.getData('text/plain'))}}
+ box.querySelectorAll('.tok').forEach(t=>t.onclick=()=>t.classList.toggle('m'));
+ chk.onclick=()=>{
+  let ok,ans,gv;
+  if(q.type==='calc'){const v=parseFloat(box.querySelector('#ci').value.replace(',','.'));if(isNaN(v))return;gv=v;ok=Math.abs(v-q.a)<=Math.max(Math.abs(q.a)*.01,.011);ans=q.a}
+  else if(q.type==='mark'){const m=[...box.querySelectorAll('.tok.m')].map(t=>t.textContent.replace(/[.,]+$/,'')).sort().join();if(!m)return;gv=m;ok=m===[...q.a].sort().join();ans=q.a.join(', ')}
+  else{if(sel===null)return;gv=o[sel];ans=q.c||q.o[0];ok=gv===ans}
+  (ok?sfx.ok:sfx.no)();
+  box.querySelector('#fb').innerHTML=ok?'&#9989; Benar!':'&#10060; Belum tepat. Jawaban: '+ans;
+  chk.textContent='Lanjut \u25B6';chk.onclick=()=>cb(ok,gv,ans);
+ };
+}
+
+/* ===== KUIS ===== */
+let prog=G.map(()=>0),kg=0,kl=0,ki=0,ks=0;
+function kzPick(){
+ $('#kzBox').innerHTML='<h2 class="text-2xl font-extrabold mb-3" style="color:#e07a9b">Pilih Game Kuis</h2><div class="grid sm:grid-cols-2 gap-3">'+G.map((g,i)=>`<button class="btn ${g.c} py-5 text-lg" onclick="kzLvl(${i})">${g.e}<br>${g.n}</button>`).join('')+'</div>';
+}
+function kzLvl(g){
+ kg=g;$('#kzBox').innerHTML=`<h2 class="text-2xl font-extrabold mb-3">${G[g].n}</h2><p class="mb-3">Selesaikan level secara berurutan.</p><div class="flex gap-3 flex-wrap">`+G[g].L.map((_,i)=>`<button class="btn ${i<=prog[g]?G[g].c:''}" ${i>prog[g]?'disabled':''} onclick="kzPlay(${i})">${i>prog[g]?'&#128274;':'&#11088;'} Level ${i+1}</button>`).join('')+'</div><button class="btn mt-4" onclick="kzPick()">&#9664; Ganti game</button>';
+}
+function kzPlay(l){kl=l;ki=0;ks=0;kzNext()}
+function kzNext(){
+ const qs=G[kg].L[kl];
+ if(ki>=qs.length){
+  if(ks>0)prog[kg]=Math.max(prog[kg],kl+1);
+  (ks>0?sfx.ok:sfx.no)();
+  const has=kl+1<G[kg].L.length&&ks>0;
+  $('#kzBox').innerHTML=`<div class="text-center"><div class="text-5xl">${'&#11088;'.repeat(ks)||'&#128170;'}</div><h2 class="text-2xl font-extrabold mt-2">Level ${kl+1} selesai</h2><p class="my-2">Benar ${ks} dari ${qs.length} soal.</p>${ks==0?'<p>Coba lagi agar level berikutnya terbuka.</p>':''}<div class="flex gap-3 justify-center flex-wrap mt-3"><button class="btn p3" onclick="kzPlay(${kl})">Ulangi</button>${has?`<button class="btn p2" onclick="kzPlay(${kl+1})">Level berikutnya</button>`:''}<button class="btn" onclick="kzLvl(${kg})">Daftar level</button></div></div>`;
+  return;
+ }
+ $('#kzBox').innerHTML=`<p class="text-sm mb-2">${G[kg].n}, Level ${kl+1}, soal ${ki+1} dari ${qs.length}</p><div id="kq"></div>`;
+ show($('#kq'),qs[ki],ok=>{if(ok)ks++;ki++;kzNext()});
+}
+
+/* ===== SIMULASI ===== */
+let sn='',sk='',si=0,ss=0;const LOG=[];
+function simReset(){$('#simIntro').classList.remove('hidden');$('#simQ').classList.add('hidden');$('#simEnd').classList.add('hidden')}
+function simStart(){
+ const v=$('#nama').value.trim();
+ if(v.length<2){$('#simErr').textContent='Isi namamu dulu (minimal 2 huruf).';return}
+ const k=$('#kelas').value.trim();
+ if(!k){$('#simErr').textContent='Isi kelasmu dulu.';return}
+ sn=v;sk=k;si=0;ss=0;LOG.length=0;$('#simErr').textContent='';
+ $('#simIntro').classList.add('hidden');$('#simQ').classList.remove('hidden');simNext();
+}
+function simNext(){
+ if(si>=S.length){simFinish();return}
+ $('#simNo').textContent=`Soal ${si+1} dari ${S.length}`;
+ show($('#simBox'),S[si],(ok,g,a)=>{if(ok)ss++;const q=S[si];LOG.push({q:q.type==='mark'?q.q+' '+q.s:q.q,g:g,a:a,ok:ok});si++;simNext()},'Jawab');
+}
+function simFinish(){
+ const n=ss*10,pr=n>=80?'Sangat Baik':n>=60?'Baik':'Terus Berlatih',tg=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+ let st;const rows=LOG.map((r,i)=>`<tr class="border-t"><td class="p-1 align-top">${i+1}</td><td class="p-1">${r.q}</td><td class="p-1">${r.g}</td><td class="p-1">${r.a}</td><td class="p-1">${r.ok?'Benar':'Salah'}</td></tr>`).join('');
+ const rec={nama:sn,kelas:sk,nilai:n,benar:ss,tanggal:tg,materi:'Kontraksi Panjang'};
+ try{const a=JSON.parse(localStorage.getItem('mpi_nilai')||'[]');a.push(rec);localStorage.setItem('mpi_nilai',JSON.stringify(a))}catch(e){}
+ if(SHEET_URL){fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(rec)}).catch(()=>{});st='Nilai dikirim ke lembar data.'}
+ else st='Nilai tersimpan di perangkat ini. URL lembar data belum diisi oleh guru.';
+ sfx.ok();
+ $('#simQ').classList.add('hidden');$('#simEnd').classList.remove('hidden');
+ $('#simEnd').innerHTML=`<div id="cert" class="card text-center mx-auto" style="max-width:44rem;border:10px double #f3c9d5;background:#fffaf0">
+ <div class="text-5xl">&#127942;</div>
+ <h2 class="text-3xl font-extrabold mt-1" style="color:#e07a9b">Sertifikat Pencapaian</h2>
+ <p class="mt-3">Diberikan kepada</p>
+ <p class="text-3xl font-extrabold my-2" style="color:#5b86d6"></p>
+ <p class="font-bold" id="ck"></p>
+ <p>yang telah menyelesaikan simulasi Fisika kelas XII<br>Relativitas Kontraksi Panjang</p>
+ <p class="text-5xl font-extrabold my-3">${n}</p>
+ <p class="font-bold">Predikat: ${pr} (benar ${ss} dari 10)</p>
+ <p class="text-sm mt-3">${tg}</p>
+ <p class="text-sm mt-1">Pengembang: Heni Suhartini, S.T.P., M.Pd. | 2026</p></div>
+ <div id="rekap" class="card mx-auto mt-4" style="max-width:44rem"><h3 class="font-bold text-xl mb-2">Rekap Jawaban: <span id="rn"></span></h3><table class="w-full text-sm text-left"><tr><th class="p-1">No</th><th class="p-1">Soal</th><th class="p-1">Jawaban siswa</th><th class="p-1">Kunci</th><th class="p-1">Hasil</th></tr>${rows}</table><p class="mt-2 font-bold">Nilai akhir: ${n} (benar ${ss} dari 10)</p></div>
+ <p class="noprint text-center text-sm mt-3">${st}</p>
+ <p class="noprint text-center text-sm">Di jendela cetak, pilih "Simpan sebagai PDF" sebagai printer.</p>
+ <div class="noprint flex gap-3 justify-center flex-wrap mt-3"><button class="btn p2" onclick="pdfSave()">Unduh Sertifikat PDF</button><button class="btn p3" onclick="simReset()">Ulangi</button><button class="btn" onclick="go('menu')">Menu</button></div>`;
+ $('#cert p.text-3xl').textContent=sn;
+ $('#ck').textContent='Kelas '+sk;$('#rn').textContent=sn+' (Kelas '+sk+')';
+}
+function pdfSave(){const t0=document.title;document.title='Sertifikat '+sn+' '+sk;print();document.title=t0}
+</script>
+</body>
+</html>
